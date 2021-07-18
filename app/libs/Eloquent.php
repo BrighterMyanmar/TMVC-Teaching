@@ -67,6 +67,55 @@ class Eloquent
         return self::$stmt->fetch(PDO::FETCH_OBJ);
     }
 
+    public static function where($ary)
+    {
+        $kv = "";
+        foreach ($ary as $key => $value) {
+            echo "Key is $key " . " Value is $value <br>";
+            $kv .= "$key=:$key AND ";
+        }
+        $kv = rtrim($kv, "AND ");
+        self::$stmt = self::$dbh->prepare("SELECT * FROM " . self::$table . " WHERE $kv");
+        foreach ($ary as $key => $value) {
+            self::bind($key, $value);
+        }
+        self::$stmt->execute();
+        return self::$stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+    public static function create($data)
+    {
+        $keys = implode(",", array_keys($data));
+        $values = ":" . implode(",:", array_keys($data));
+        self::$stmt = self::$dbh->prepare("INSERT INTO " . self::$table . " ($keys) VALUES ($values)");
+        foreach ($data as $key => $value) {
+            self::bind($key, $value);
+        }
+        self::$stmt->execute();
+        return self::findById(self::$dbh->lastInsertId());
+    }
+
+    public static function update($data)
+    {
+        $params = "";
+        foreach ($data as $key => $value) {
+            $params .= "$key=:$key,";
+        }
+        $params = rtrim($params, ',');
+        self::$stmt = self::$dbh->prepare("UPDATE " . self::$table .  " SET $params WHERE id=:id");
+        foreach ($data as $key => $value) {
+            self::bind($key, $value);
+        }
+        self::$stmt->execute();
+        return self::findById($data->id);
+    }
+
+    public static function delete($data){
+        self::$stmt = self::$dbh->prepare("DELETE FROM " . self::$table . " WHERE id=:id");
+        self::$stmt->bindParam(":id",$data->id,PDO::PARAM_INT);
+        self::$stmt->execute();
+        return true;
+    }
+
     public static function bind($key, $value, $type = "")
     {
         switch ($value) {
@@ -84,9 +133,6 @@ class Eloquent
         }
         self::$stmt->bindParam($key, $value, $type);
     }
-
-
-
 
 
 
