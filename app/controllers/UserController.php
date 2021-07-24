@@ -97,7 +97,7 @@ class UserController extends Controller
                     if (password_verify($data['password'], $user->password)) {
                         setSession("name", $user->name);
                         setSession("user", $user);
-                        $this->view('cat/home');
+                        redirect('home/index');
                     } else {
                         $data["password_err"] = "Password Error!";
                         $this->view("user/login", $data);
